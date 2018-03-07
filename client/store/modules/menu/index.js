@@ -1,9 +1,10 @@
 import * as types from '../../mutation-types'
 import lazyLoading from './lazyLoading'
-import charts from './charts'
-import uifeatures from './uifeatures'
-import components from './components'
-import tables from './tables'
+// import charts from './charts'
+// import uifeatures from './uifeatures'
+// import components from './components'
+// import tables from './tables'
+// import olap from './olap'
 
 // show: meta.label -> name
 // name: component name
@@ -12,28 +13,19 @@ import tables from './tables'
 const state = {
   items: [
     {
-      name: 'Dashboard',
-      path: '/dashboard',
+      name: 'Olap',
+      path: '/olap',
       meta: {
-        icon: 'fa-tachometer',
-        link: 'dashboard/index.vue'
-      },
-      component: lazyLoading('dashboard', true)
-    },
-    {
-      name: 'Axios',
-      path: '/axiosDemo',
-      meta: {
-        auth: true,
         icon: 'fa-rocket',
-        link: 'axios/index.vue'
+        link: 'olap/olap.vue'
       },
-      component: lazyLoading('axios', true)
-    },
-    charts,
-    uifeatures,
-    components,
-    tables
+      component: lazyLoading('olap', true)
+    }
+    // charts,
+    // uifeatures,
+    // components,
+    // tables,
+    // olap
   ]
 }
 

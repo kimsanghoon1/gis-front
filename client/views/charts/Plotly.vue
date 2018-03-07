@@ -317,7 +317,7 @@ export default {
         showlegend: false,
         margin: { t: 0, l: 0, b: 0, r: 0 },
         geo: {
-          scope: 'usa',
+          scope: 'kor',
           projection: {
             type: 'albers usa'
           },
