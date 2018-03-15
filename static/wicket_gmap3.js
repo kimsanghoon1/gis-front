@@ -1,3 +1,4 @@
+/* eslint-disable */
 /** @license
  *
  *  Copyright (C) 2012 K. Arthur Endsley (kaendsle@mtu.edu)
@@ -18,8 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-(function ( root, factory ) {
-  if ( typeof exports === 'object' ) {
+(function (root, factory){
+  if ( typeof exports === 'object'){
     // CommonJS
     factory( require('./wicket') );
   } else if ( typeof define === 'function' && define.amd ) {

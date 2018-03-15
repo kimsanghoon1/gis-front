@@ -1,3 +1,4 @@
+
 <template>
   <div>
     <tabs type="boxed">
@@ -71,7 +72,7 @@
               </p>
               <div align="right">
                 <p align="right">
-                  <button class="button is-primary">Submit</button>
+                  <button class="button is-primary" @click="clearMap(); mapIt();">Submit</button>
                 </p>
               </div>
             </article>
@@ -101,7 +102,6 @@
             </div>
           </div>
         </div>
-
       </tab-pane>
     </tabs>
 
@@ -109,8 +109,11 @@
 </template>
 
 <script>
+  /* eslint-disable */
   import Plotly from 'plotly.js'
   import { Tabs, TabPane } from 'vue-bulma-tabs'
+
+  var wkt = new Wkt.Wkt();
 
   export default {
     components: {
@@ -120,16 +123,20 @@
 
     created () {
       this.fetchData()
-
     },
 
     mounted () {
-      this.gmapinit()
+      this.googleinit()
     },
-
+    watch() {
+      googleWKT: {
+        console.log(this.googleWKT)
+      }
+    },
     data () {
       return {
         rows: [],
+        features: [],
         code: '',
         modes: ['Dynamic proportional symbols', 'Fixed intervals', 'Dynamic proportional symbols'],
         fontsize: ['12px', '13px', '14px', '16px', '18px', '20px', '22px', '24px'],
@@ -150,108 +157,156 @@
     },
 
     methods: {
-      fetchData () {
-        Plotly.d3.csv('', (err, rows) => {
-          if (err) {
-            rows = []
+      clearMap: function () {
+        var i;
+        var me = this
+        // Reset the remembered last string (so that we can clear the map,
+        //  paste the same string, and see it again)
+        for (i in me.features) {
+          if (me.features.hasOwnProperty(i)) {
+            me.features[i].setMap(null);
           }
-          this.rows = rows
-          this.drawMap()
-        })
+        }
+        me.features.length = 0;
       },
+      /**
+       * Clears the current contents of the textarea.
+       */
+      clearText: function () {
+        var me = this
+        me.googleWKT = '';
+      },
+      /**
+       * Maps the current contents of the textarea.
+       * @return  {Object}    Some sort of geometry object
+       */
       mapIt: function () {
+        console.log("mapit")
         var el, obj, wkt;
-        el = this.googleWKT;
+        var me = this;
+        var setmap = me.gmap;
+        el = me.googleWKT;
         wkt = new Wkt.Wkt();
-        if (el.last === el.value) { // Remember the last string
-          return; // Do nothing if the WKT string hasn't changed
-        } else {
-          el.last = el.value;
-        }
-        try { // Catch any malformed WKT strings
-          wkt.read(el.value);
-        } catch (e1) {
-          try {
-            wkt.read(el.value.replace('\n', '').replace('\r', '').replace('\t', ''));
-          } catch (e2) {
-            if (e2.name === 'WKTError') {
-              alert('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
-              return;
-            }
-          }
-        }
-        obj = wkt.toObject(this.gmap.defaults); // Make an object
+//        if (el.last === el.value) { // Remember the last string
+//          return; // Do nothing if the WKT string hasn't changed
+//        } else {
+//          el.last = el.value;
+//        }
+//        try { // Catch any malformed WKT strings
+//          wkt.read(el.value);
+//        } catch (e1) {
+//          try {
+//            wkt.read(el.value.replace('\n', '').replace('\r', '').replace('\t', ''));
+//          } catch (e2) {
+//            if (e2.name === 'WKTError') {
+//              alert('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+//              return;
+//            }
+//          }
+//        }
+        wkt.read(el)
+        obj = wkt.toObject(me.gmap.defaults); // Make an object
         // Add listeners for overlay editing events
         if (!Wkt.isArray(obj) && wkt.type !== 'point') {
           // New vertex is inserted
           google.maps.event.addListener(obj.getPath(), 'insert_at', function (n) {
-            app.updateText();
+            me.updateText();
           });
           // Existing vertex is removed (insertion is undone)
           google.maps.event.addListener(obj.getPath(), 'remove_at', function (n) {
-            app.updateText();
+            amepp.updateText();
           });
           // Existing vertex is moved (set elsewhere)
           google.maps.event.addListener(obj.getPath(), 'set_at', function (n) {
-            app.updateText();
+            me.updateText();
           });
         } else {
           if (obj.setEditable) {obj.setEditable(false);}
         }
         if (Wkt.isArray(obj)) { // Distinguish multigeometries (Arrays) from objects
-          for (i in obj) {
+          for (var i in obj) {
             if (obj.hasOwnProperty(i) && !Wkt.isArray(obj[i])) {
-              obj[i].setMap(this.gmap);
+              obj[i].setMap(setmap);
             }
             if (wkt.type !== 'point') {
               // New vertex is inserted
               google.maps.event.addListener(obj[i].getPath(), 'insert_at', function (n) {
-                app.updateTextPart();
+                me.updateTextPart();
               });
               // Existing vertex is removed (insertion is undone)
               google.maps.event.addListener(obj[i].getPath(), 'remove_at', function (n) {
-                app.updateTextPart();
+                me.updateTextPart();
               });
               // Existing vertex is moved (set elsewhere)
               google.maps.event.addListener(obj[i].getPath(), 'set_at', function (n) {
-                app.updateTextPart();
+                me.updateTextPart();
               });
             }
           }
-          this.features = this.features.concat(obj);
+          me.features = me.features.concat(obj);
         } else {
-          obj.setMap(this.gmap); // Add it to the map
-          this.features.push(obj);
+          obj.setMap(setmap); // Add it to the map
+          me.features.push(obj);
         }
         // Pan the map to the feature
         if (obj.getBounds !== undefined && typeof obj.getBounds === 'function') {
           // For objects that have defined bounds or a way to get them
-          this.gmap.fitBounds(obj.getBounds());
+          me.gmap.fitBounds(obj.getBounds());
         } else {
           if (obj.getPath !== undefined && typeof obj.getPath === 'function') {
             // For Polygons and Polylines
-            this.gmap.panTo(obj.getPath().getAt(0));
+            me.gmap.panTo(obj.getPath().getAt(0));
           } else { // But points (Markers) are different
             if (obj.getPosition !== undefined && typeof obj.getPosition === 'function') {
-              this.gmap.panTo(obj.getPosition());
+              me.gmap.panTo(obj.getPosition());
             }
           }
         }
         return obj;
       },
+      /**
+       * Updates the textarea based on the first available feature.
+       */
       updateText: function () {
         var wkt = new Wkt.Wkt();
-        wkt.fromObject(this.features[0]);
-        this.googleWKT = wkt.write();
-      },
-      gmapinit: function () {
         var me = this
-
-        me.gmap = new google.maps.Map(document.getElementById('canvas'), {
+        wkt.fromObject(me.features[0]);
+        me.googleWKT = wkt.write();
+      },
+      updateTextPart: function () {
+        var i, w, v;
+        var me = this
+        w = new Wkt.Wkt(me.features[0]);
+        i = 1;
+        while (i < me.features.length) {
+          v = new Wkt.Wkt(me.features[i]);
+          w.merge(v);
+          i += 1;
+        }
+        me.googleWKT = w.write();
+      },
+      /**
+       * Formats the textarea contents for a URL.
+       * @param   checked {Boolean}   The check state of the associated checkbox
+       */
+      urlify: function (checked) {
+        var wkt = new Wkt.Wkt();
+        var me = this
+        wkt.read(me.googleWKT);
+        wkt.delimiter = (checked) ? '+' : ' ';
+        me.googleWKT = wkt.write();
+        return wkt;
+      },
+      /**
+       * Application entry point.
+       * @return  {<google.maps.Map>} The Google Maps API instance
+       */
+      googleinit: function () {
+        var me = this;
+        var gmap;
+        gmap = new google.maps.Map(document.getElementById('canvas'), {
           center: new google.maps.LatLng(30, 10),
           defaults: {
-            icon: 'red_dot.png',
-            shadow: 'dot_shadow.png',
             editable: true,
             strokeColor: '#990000',
             fillColor: '#EEFFCC',
@@ -273,17 +328,15 @@
             style: google.maps.ZoomControlStyle.SMALL
           }
         });
-
-        google.maps.event.addListener(me.gmap, 'tilesloaded', function () {
-          if (!this.loaded) {
-            this.loaded = true;
+        google.maps.event.addListener(gmap, 'tilesloaded', function () {
+          if (!me.loaded) {
+            me.loaded = true;
             // NOTE: We start with a MULTIPOLYGON; these aren't easily deconstructed, so we won't set this object to be editable in this example
             me.googleWKT = 'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), ((20 35, 45 20, 30 5, 10 10, 10 30, 20 35), (30 20, 20 25, 20 15, 30 20)))';
-            me.mapIt();
+            me.mapIt(gmap);
           }
         });
-
-        me.gmap.drawingManager = new google.maps.drawing.DrawingManager({
+        gmap.drawingManager = new google.maps.drawing.DrawingManager({
           drawingControlOptions: {
             position: google.maps.ControlPosition.TOP_CENTER,
             drawingModes: [
@@ -293,46 +346,56 @@
               google.maps.drawing.OverlayType.RECTANGLE
             ]
           },
-          markerOptions: me.gmap.defaults,
-          polygonOptions: me.gmap.defaults,
-          polylineOptions: me.gmap.defaults,
-          rectangleOptions: me.gmap.defaults
+          markerOptions: gmap.defaults,
+          polygonOptions: gmap.defaults,
+          polylineOptions: gmap.defaults,
+          rectangleOptions: gmap.defaults
         });
-        me.gmap.drawingManager.setMap(me.gmap);
-        google.maps.event.addListener(me.gmap.drawingManager, 'overlaycomplete', function (event) {
+        gmap.drawingManager.setMap(gmap);
+        google.maps.event.addListener(gmap.drawingManager, 'overlaycomplete', function (event) {
           var wkt;
-          app.clearText();
-          app.clearMap();
+          me.clearText();
+          me.clearMap();
           // Set the drawing mode to "pan" (the hand) so users can immediately edit
           this.setDrawingMode(null);
           // Polygon drawn
           if (event.type === google.maps.drawing.OverlayType.POLYGON || event.type === google.maps.drawing.OverlayType.POLYLINE) {
             // New vertex is inserted
             google.maps.event.addListener(event.overlay.getPath(), 'insert_at', function (n) {
-              app.updateText();
+              me.updateText();
             });
             // Existing vertex is removed (insertion is undone)
             google.maps.event.addListener(event.overlay.getPath(), 'remove_at', function (n) {
-              app.updateText();
+              me.updateText();
             });
             // Existing vertex is moved (set elsewhere)
             google.maps.event.addListener(event.overlay.getPath(), 'set_at', function (n) {
-              app.updateText();
+              me.updateText();
             });
           } else if (event.type === google.maps.drawing.OverlayType.RECTANGLE) { // Rectangle drawn
             // Listen for the 'bounds_changed' event and update the geometry
             google.maps.event.addListener(event.overlay, 'bounds_changed', function () {
-              app.updateText();
+              me.updateText();
             });
           }
-          app.features.push(event.overlay);
+          me.features.push(event.overlay);
           wkt = new Wkt.Wkt();
           wkt.fromObject(event.overlay);
-
+          me.googleWKT = wkt.write();
         });
-
+        me.gmap = gmap;
+        return gmap;
       },
 
+      fetchData () {
+        Plotly.d3.csv('', (err, rows) => {
+          if (err) {
+            rows = []
+          }
+          this.rows = rows
+          this.drawMap()
+        })
+      },
       drawMap () {
         let rows = this.rows
         function unpack (rows, key) {
