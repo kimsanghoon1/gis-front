@@ -59,7 +59,8 @@
           <div class="tile is-parent">
             <article class="tile is-child box">
               <h4 class="title">Map</h4>
-              <div id="canvas" style="min-height: 450px;"></div>
+              <div id="canvas" style="min-height: 450px;">
+              </div>
               <p style="margin-top: 20px; margin-bottom: 20px;">
                 <a class="button is-info is-outlined" @click="clearMap(); mapItMulti(city)">CA 드릴다운</a>
                 <a class="button is-info is-outlined" @click="clearMap(); mapItMulti(state)">US 롤업</a>
@@ -102,7 +103,6 @@
         </div>
       </tab-pane>
     </tabs>
-
   </div>
 </template>
 
@@ -132,6 +132,9 @@
       return {
         rows: [],
         features: [],
+        viewMenu: false,
+        menuX: 0,
+        menuY: 0,
         code: '',
         modes: ['Dynamic proportional symbols', 'Fixed intervals', 'Dynamic proportional symbols'],
         fontsize: ['12px', '13px', '14px', '16px', '18px', '20px', '22px', '24px'],
@@ -155,6 +158,66 @@
     },
 
     methods: {
+      showContextMenu: function (caurrentLatLng) {
+        var projection;
+        var contextmenuDir;
+        projection = map.getProjection() ;
+        $('.contextmenu').remove();
+        contextmenuDir = document.createElement("div");
+        contextmenuDir.className  = 'contextmenu';
+        contextmenuDir.innerHTML = '<a id="menu1"><div class="context">menu item 1<\/div><\/a>'
+          + '<a id="menu2"><div class="context">menu item 2<\/div><\/a>';
+
+        $(map.getDiv()).append(contextmenuDir);
+
+        setMenuXY(caurrentLatLng);
+
+        contextmenuDir.style.visibility = "visible";
+      },
+      getCanvasXY:function(caurrentLatLng) {
+        var scale = Math.pow(2, map.getZoom());
+        var nw = new google.maps.LatLng(
+          map.getBounds().getNorthEast().lat(),
+          map.getBounds().getSouthWest().lng()
+        );
+        var worldCoordinateNW = map.getProjection().fromLatLngToPoint(nw);
+        var worldCoordinate = map.getProjection().fromLatLngToPoint(caurrentLatLng);
+        var caurrentLatLngOffset = new google.maps.Point(
+          Math.floor((worldCoordinate.x - worldCoordinateNW.x) * scale),
+          Math.floor((worldCoordinate.y - worldCoordinateNW.y) * scale)
+        );
+        return caurrentLatLngOffset;
+      },
+      setMenuXY: function(carrentLatLng){
+        var mapWidth = $('#map_canvas').width();
+        var mapHeight = $('#map_canvas').height();
+        var menuWidth = $('.contextmenu').width();
+        var menuHeight = $('.contextmenu').height();
+        var clickedPosition = getCanvasXY(caurrentLatLng);
+        var x = clickedPosition.x ;
+        var y = clickedPosition.y ;
+
+        if((mapWidth - x ) < menuWidth)//if to close to the map border, decrease x position
+          x = x - menuWidth;
+        if((mapHeight - y ) < menuHeight)//if to close to the map border, decrease y position
+          y = y - menuHeight;
+
+        $('.contextmenu').css('left',x  );
+        $('.contextmenu').css('top',y );
+      },
+      componentToHex: function (c) {
+        var hex = parseInt(c)
+
+        console.log(hex.toString(16))
+        return hex.toString(16).length == 1 ? "0" + hex.toString(16) : hex.toString(16);
+      },
+
+      rgbToHex: function (r,g,b) {
+        var me = this
+
+        return "#" + me.componentToHex(r) + me.componentToHex(g) + me.componentToHex(b);
+      },
+
       clearMap: function () {
         var i;
         var me = this
@@ -181,11 +244,16 @@
 
       mapItMulti: function (wktlist) {
         var me = this
+        var r = '255';
+        var g;
+        var b;
         for (var i = 0; i < wktlist.length; i++) {
-         me.mapIt(wktlist[i]);
+          g = (Math.round(i/8) * 255)/10
+          b = g
+         me.mapIt(wktlist[i], r, g, b);
         }
       },
-      mapIt: function (drawWkt) {
+      mapIt: function (drawWkt, r, g, b) {
 
         var el, obj, wkt;
         var me = this;
@@ -215,7 +283,10 @@
 //        }
 
         wkt.read(el)
-        me.gmap.defaults.fillColor = '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
+//        me.gmap.defaults.fillColor = '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
+        console.log(me.rgbToHex(r,g,b))
+        me.gmap.defaults.fillColor = me.rgbToHex(r,g,b);
+
         obj = wkt.toObject(me.gmap.defaults); // Make an object
         // Add listeners for overlay editing events
         if (!Wkt.isArray(obj) && wkt.type !== 'point') {
@@ -315,6 +386,7 @@
       googleinit: function () {
         var me = this;
         var gmap;
+
         gmap = new google.maps.Map(document.getElementById('canvas'), {
           center: new google.maps.LatLng(30, 10),
           defaults: {
@@ -322,7 +394,7 @@
             // strokeColor: '#990000',
             strokeWeight: '0.1',
             fillColor: '#91b6ff',
-            fillOpacity: 0.6
+            fillOpacity: '0.5'
           },
           disableDefaultUI: true,
           mapTypeControl: true,
@@ -348,6 +420,7 @@
         //     me.mapIt(gmap);
         //   }
         // });
+
         gmap.drawingManager = new google.maps.drawing.DrawingManager({
           drawingControlOptions: {
             position: google.maps.ControlPosition.TOP_CENTER,
@@ -364,6 +437,25 @@
           rectangleOptions: gmap.defaults
         });
         gmap.drawingManager.setMap(gmap);
+
+
+        // Right Mouse Event
+        var contextMenu = google.maps.event.addListener(
+          gmap,
+          "rightclick",
+          function( event ) {
+            // use JS Dom methods to create the menu
+            // use event.pixel.x and event.pixel.y
+            // to position menu at mouse position
+            me.menuX = event.pixel.x;
+            me.menuY = event.pixel.y;
+
+            console.log( event );
+
+            me.viewMenu = true;
+          }
+        )
+
         google.maps.event.addListener(gmap.drawingManager, 'overlaycomplete', function (event) {
           var wkt;
           me.clearText();
@@ -472,5 +564,46 @@
 <style scoped>
   .js-plotly-plot {
     max-width: 100%;
+  }
+  .contextMenu {
+    position: absolute;
+    z-index: 1000;
+
+    display:none;
+
+    min-width: 120px;
+
+    background: #eee;
+    border:1px solid #777;
+
+  }
+
+  .contextMenu ul {
+
+    padding: 3px 0px;
+    margin: 0px;
+
+    border: solid 1px #fff;
+  }
+
+  .contextMenu li {
+    list-style: none;
+    padding: 0px 1px;
+    margin: 0px;
+  }
+  .contextMenu a {
+    display: block;
+    color: #000;
+    text-decoration: none;
+    line-height: 22px;
+    height: 22px;
+    padding: 1px 8px;
+  }
+
+  .contextMenu li.hover a {
+    padding: 0px 7px;
+    background-color: #DFE6F5;
+    border: 1px solid #A2C1FA;
+    border-radius:2px;
   }
 </style>
