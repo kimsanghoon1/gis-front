@@ -91,6 +91,7 @@
                 <p class="title is-3">세부정보</p>
               </article>
               <article class="tile is-child box">
+                <p class="subtitle is-5">State: {{stateName}} </p>
                 <p class="subtitle is-5">member: </p>
                 <p class="subtitle is-5">Cell value: </p>
                 <p class="subtitle is-5">Ordinals: </p>
@@ -137,6 +138,7 @@
         menuY: 0,
         code: '',
         polygon:[],
+        stateName:'',
         modes: ['Dynamic proportional symbols', 'Fixed intervals', 'Dynamic proportional symbols'],
         fontsize: ['12px', '13px', '14px', '16px', '18px', '20px', '22px', '24px'],
         codefolding: ['manual', 'markbegin', 'markbeginend'],
@@ -173,8 +175,16 @@
             if (results[0].geometry) {
               var address = results[0].formatted_address.replace(/^日本, /, '')
 
+
+
               for (var i = 0; i < me.markers.length; i++) {
                 me.markers[i].setMap(null);
+              }
+
+              for (var j = 0; j < results[0].address_components.length; j++) {
+                if (results[0].address_components[j].types[0] == 'administrative_area_level_1') {
+                  me.stateName =  results[0].address_components[j].long_name
+                }
               }
 
               var marker = new google.maps.Marker({
