@@ -172,6 +172,11 @@
           if (status == google.maps.GeocoderStatus.OK) {
             if (results[0].geometry) {
               var address = results[0].formatted_address.replace(/^日本, /, '')
+
+              for (var i = 0; i < me.markers.length; i++) {
+                me.markers[i].setMap(null);
+              }
+
               var marker = new google.maps.Marker({
                 position: latlng,
                 map: me.gmap
@@ -336,7 +341,7 @@
             }
             if (wkt.type !== 'point') {
               // New vertex is inserted
-              google.maps.event.addListener(obj, 'click', function (event) {
+              google.maps.event.addListener(obj[i], 'click', function (event) {
                 me.getAddress(event.latLng);
               });
               google.maps.event.addListener(obj[i], 'rightclick', function (event) {
