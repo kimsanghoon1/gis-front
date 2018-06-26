@@ -9,6 +9,9 @@ import router from './router'
 import store from './store'
 import * as filters from './filters'
 import { TOGGLE_SIDEBAR } from 'vuex-store/mutation-types'
+import VTooltip from 'v-tooltip'
+
+Vue.use(VTooltip)
 
 Vue.router = router
 Vue.use(VueAxios, axios)

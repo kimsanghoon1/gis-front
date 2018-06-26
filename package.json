@@ -44,6 +44,8 @@
     "ol": "^4.6.5",
     "ol-contextmenu": "^3.2.0",
     "plotly.js": "^1.24.2",
+    "popper.js": "^1.14.3",
+    "v-tooltip": "^2.0.0-rc.32",
     "vue": "^2.2.2",
     "vue-axios": "^2.0.1",
     "vue-bulma-brace": "^0.1.0",
@@ -68,14 +70,18 @@
     "vue-bulma-tabs": "^1.1.2",
     "vue-bulma-tooltip": "^1.0.3",
     "vue-cleave": "1.1.1",
+    "vue-color": "^2.4.6",
     "vue-context-menu": "^2.0.6",
     "vue-lory": "0.0.4",
     "vue-nprogress": "0.1.5",
     "vue-peity": "0.5.0",
     "vue-router": "^2.3.0",
+    "vuedraggable": "^2.16.0",
     "vuex": "^2.2.1",
     "vuex-router-sync": "^4.1.2",
-    "wysiwyg.css": "0.0.2"
+    "wkx": "^0.4.5",
+    "wysiwyg.css": "0.0.2",
+    "xmla4js": "0.0.2"
   },
   "devDependencies": {
     "autoprefixer": "^6.7.7",
