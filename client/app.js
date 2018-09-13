@@ -10,8 +10,10 @@ import store from './store'
 import * as filters from './filters'
 import { TOGGLE_SIDEBAR } from 'vuex-store/mutation-types'
 import VTooltip from 'v-tooltip'
+import AutoResponsive from 'autoresponsive-vue'
 
 Vue.use(VTooltip)
+Vue.use(AutoResponsive)
 
 Vue.router = router
 Vue.use(VueAxios, axios)
