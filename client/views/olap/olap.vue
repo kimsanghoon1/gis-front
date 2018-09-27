@@ -19,7 +19,7 @@
             </div>
 
               <!-- Map Start -->
-              <div id="map" style="height: 500px; width: 100%;" v-if="settings == false && chart =='Map'"></div>
+              <div id="map" style="height: 700px; width: 100%;" v-if="settings == false && chart =='Map'"></div>
               <!-- Map End -->
 
               <!-- Pie Chart Start -->

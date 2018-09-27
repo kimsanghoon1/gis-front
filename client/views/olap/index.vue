@@ -1,7 +1,7 @@
 <template>
   <div v-bind:style="{ height: containerHeight + 'px' }">
     <div class="md-layout md-gutter">
-      <div class="md-layout-item md-layout">
+      <div style="margin: 10px;" class="md-layout-item md-layout">
         <olap v-on:delete-row="deleteThisRow(index)"
               :componentWidth.sync="items[0].size"
               :containerWidth="containerWidth"
@@ -16,7 +16,7 @@
         </olap>
       </div>
       <div class="md-layout-item md-layout">
-        <div class="md-layout-item md-medium-size-33 md-small-size-50 md-xsmall-size-100" v-for="(item, index) in items"   :key="item.id" v-if="index != 0">
+        <div class="md-layout-item" v-for="(item, index) in items" style="margin-top: 10px;"  :key="item.id" v-if="index != 0">
           <olap v-on:delete-row="deleteThisRow(index)"
                 :componentWidth.sync="item.size"
                 :containerWidth="containerWidth"
